@@ -92,10 +92,10 @@ int main(void) {
     DDRC = 0;         // BUTTONS
     PORTC = 255;
 	
-	SPI_MasterInit(); // SPI
+    SPI_MasterInit(); // SPI
     TIM0_Init();      // TIMER 
     init_adc();       // ADC
-	sei();			  // enable interruptions
+    sei();			  // enable interruptions
 	
     //display "PLAY" untill any button == 1
     fb_floor[14] = 0xe8ea;
@@ -109,7 +109,7 @@ int main(void) {
     fb_init();
     nextblock = rand8();
     newblock();
-	updateframebuffer();
+    updateframebuffer();
 
     while (~lock) {
         lock=1;  
@@ -119,19 +119,19 @@ int main(void) {
         }
         if (PC2_PUSHED && debounce > ((500 - lvl)<<1)/4) {
             moveleft();
-			debounce = 0;
+	    debounce = 0;
         }
         if (PC3_PUSHED && debounce > ((500 - lvl)<<1)/4) {
             movedown();
-			debounce = 0;
+	    debounce = 0;
         }
         if (PC0_PUSHED && debounce > ((500 - lvl)<<1)/4) {
             moveright();
-			debounce = 0;
+	    debounce = 0;
         }
         if (PC1_PUSHED && debounce > ((500 - lvl)<<1)/4) {
             rotateRight();
-			debounce = 0;
+	    debounce = 0;
         }
     }
     return (0);
@@ -225,13 +225,13 @@ void gameover() {
     for (uint8_t j=0; j<5; j++) {
         for (uint8_t i=0; i<32; ++i) {
             fb_main[i] = 0xffff;
-		}
+	}
         tim_ms = 0;
         while (tim_ms < 500)
 		;
         for (uint8_t i=0; i<32; ++i) {
             fb_main[i] = 0x0000;
-		}
+	}
         tim_ms = 0;
         while (tim_ms < 500)
 		;
@@ -256,7 +256,7 @@ int spacedown() {
     for (int8_t i=30; i>=7; i--) {
         if (fb_blocks[i] & fb_floor[i + 1]) {
             return 0;
-		}
+	}
     }
     return 1;
 }
@@ -279,7 +279,7 @@ int spaceleft() {
     for (uint8_t i=-2; i<=2; ++i) {
         if (fb_blocks[cordy + i] & fb_floor[cordy + i] >> 1) {
             return 0;
-		}
+	}
     }
     return 1;
 }
@@ -296,7 +296,7 @@ int spaceright() {
     for (uint8_t i=-2; i<=2; ++i) {
         if (fb_blocks[cordy + i] & fb_floor[cordy + i] << 1) {
             return 0;
-		}
+	}
     }
     return 1;
 }
@@ -768,12 +768,12 @@ void updatepoints() {
 // interruption every 0.512 ms
 ISR(TIMER0_COMPA_vect) {
         tim_ms++;
-		debounce++;
+	debounce++;
         lock=0;
-		SPI_MasterTransmit_16bit(~fb_main[iterator]);   // send frame buffer
-		SPI_MasterTransmit_32bit(0x80000000>>iterator); // send one-hot row 
-		iterator++;
-		if (iterator == 32) {
-			iterator = 0;
-		}
+	SPI_MasterTransmit_16bit(~fb_main[iterator]);   // send frame buffer
+	SPI_MasterTransmit_32bit(0x80000000>>iterator); // send one-hot row 
+	iterator++;
+	if (iterator == 32) {
+		iterator = 0;
+	}
 }
