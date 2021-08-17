@@ -2,7 +2,7 @@
 
 // #include <inttypes.h>      /* optional */
 // #include <unistd.h>        /* optional */
-#include <stdlib.h>           /* srand, rand */
+#include <stdlib.h>           
 #include <avr/io.h>           /* AVR lib */
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -52,9 +52,6 @@ uint8_t nextblock;
 uint8_t currentblock;
 uint8_t lvl;                  /* level counter; it's used to calculate the speed of falling of the block */
 
-uint16_t seed_val = 0;        /* values used in rand8() function */
-uint8_t rand_val = 0;
-
 volatile uint16_t tim_ms = 0;      /* timer variable */
 volatile uint8_t lock = 0;         /* lock is used for locking infinite lopp during interruption */
 volatile uint8_t iterator = 0;     /* timer variable */
@@ -63,9 +60,6 @@ volatile uint16_t debounce = 0;    /* variable used to get the button debounce e
 /***********************************************\
 * Function declarations 
 \***********************************************/
-void init_adc();                                     /* initialize ADC */
-uint16_t read_adc(uint8_t adc_channel);              /* read ADC values */
-uint8_t rand8(void);                                 /* random number generator */
 void SPI_MasterInit();                               /* initialize SPI */
 void SPI_MasterTransmit_16bit(uint16_t data_bytes);  /* send frame buffer */
 void SPI_MasterTransmit_32bit(uint32_t data_bytes);  /* send column number */
@@ -94,7 +88,6 @@ int main(void) {
 	
     SPI_MasterInit();   /* initialize SPI */
     TIM0_Init();        /* initialize TIMER */
-    init_adc();         /* initialize ADC */
     sei();	        /* enable interruptions */
 	
     /* display "PLAY" untill any button == 1 */
@@ -108,7 +101,7 @@ int main(void) {
 	    ;
 
     fb_init();
-    nextblock = rand8();
+    nextblock = tim_ms%7;
     newblock();
     updateframebuffer();
 
@@ -141,43 +134,8 @@ int main(void) {
 * Function codes
 \***********************************************/
 /**
-* @brief Initialize A/D converter
-*/
-void init_adc(){
-    ADMUX |= (1<<REFS0);
-    ADCSRA |= (1<<ADPS2) | (1<<ADPS1) | (1<<ADEN); // prescaler = 64, 
-}
-/**
-* @brief Read value from A/D converter
-*
-* @param A/D channel
-*
-* @return Converted digital value
-*/
-uint16_t read_adc(uint8_t adc_channel){
-    ADMUX = (1<<REFS0) | (adc_channel & 0x0F);
-    ADCSRA |= (1<<ADSC);
-    while(ADCSRA & (1<<ADSC));
-    return ADC;
-}
-/**
-* @brief Generate random 0-7 number
-*
-* @return Random 0-7 int number
-*/
-uint8_t rand8(void){
-    init_adc();
-    for(uint8_t i=0; i<16; i++){
-        seed_val = seed_val<<1 | (read_adc(PC5)&0b1);
-    }
-    srand(seed_val);
-    rand_val = rand()%8;
-	
-    return rand_val;
-}
-/**
-* @brief Initialize SPI transmission
-*/
+ * @brief Initialize SPI transmission
+ */
 void SPI_MasterInit(void) {
     /* Set MOSI, CS and SCK output, all others input */
     DDRB = (1<<PB3) | (1<<PB5) | (1<<PB2);
@@ -185,10 +143,10 @@ void SPI_MasterInit(void) {
     SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0) | (1<<DORD);
 }
 /**
-* @brief Send two data bytes through SPI
-*
-* @param Two data bytes
-*/
+ * @brief Send two data bytes through SPI
+ *
+ * @param Two data bytes
+ */
 void SPI_MasterTransmit_16bit(uint16_t data_bytes) {
     /* Start transmission of first byte (most significant byte) */
     SPDR = data_bytes>>8;
@@ -202,10 +160,10 @@ void SPI_MasterTransmit_16bit(uint16_t data_bytes) {
 	    ;
 }
 /**
-* @brief Send four data bytes through SPI
-*
-* @param Four data bytes
-*/
+ * @brief Send four data bytes through SPI
+ *
+ * @param Four data bytes
+ */
 void SPI_MasterTransmit_32bit(uint32_t data_bytes) {
     /* Start transmission of first byte (most significant byte) */
     SPDR = data_bytes>>24;
@@ -232,8 +190,8 @@ void SPI_MasterTransmit_32bit(uint32_t data_bytes) {
     LT_OFF;
 }
 /**
-* @brief Initialize TIMER0. Trigger interruptions every 0.512 ms
-*/
+ * @brief Initialize TIMER0. Trigger interruptions every 0.512 ms
+ */
 void TIM0_Init() {			            
     TCCR0A = (1<<WGM01);	         /* set CTC mode */
     TCCR0B = (1<<CS00) | (1<<CS02);  /* fck/1024 */
@@ -241,12 +199,12 @@ void TIM0_Init() {
     TIMSK0 = (1<<OCIE0A);
 }
 /**
-* @brief Delete every full row. 
-*	 If any level has been deleted, call updatepoints()
-*  1. scan levels and find the full one
-*  2. if you find any, delete level, increment points
-*  3. move whole board one block down 
-*/
+ * @brief Delete every full row. 
+ *	 If any level has been deleted, call updatepoints()
+ *  1. scan levels and find the full one
+ *  2. if you find any, delete level, increment points
+ *  3. move whole board one block down 
+ */
 void deletelevel() {
     uint8_t i = 31;
     while (i>7) {
@@ -260,8 +218,8 @@ void deletelevel() {
     }
 }
 /**
-* @brief End the game, display user's points.
-*/
+ * @brief End the game, display user's points.
+ */
 void gameover() {
     tim_ms = 0;
     while (tim_ms < 500)
@@ -289,10 +247,10 @@ void gameover() {
 	;                            
 }
 /**
-* @brief Determine if there is space under the block
-*
-* @return True or False.
-*/
+ * @brief Determine if there is space under the block
+ *
+ * @return True or False.
+ */
 int spacedown() {
     if (fb_blocks[31]) {
         return 0;
@@ -305,8 +263,8 @@ int spacedown() {
     return 1;
 }
 /**
-* @brief Move block one pixel down.
-*/
+ * @brief Move block one pixel down.
+ */
 void movedown() {
     if (spacedown()) {
         for (int8_t i=31; i>7; i--) {
@@ -323,10 +281,10 @@ void movedown() {
     }
 }
 /**
-* @brief Determine if there is space to the left the block
-*
-* @return True or False.
-*/
+ * @brief Determine if there is space to the left the block
+ *
+ * @return True or False.
+ */
 int spaceleft() {
     for (uint8_t i=-2; i<=2; ++i) {
         if (fb_blocks[cordy + i] & fb_floor[cordy + i] >> 1) {
@@ -336,8 +294,8 @@ int spaceleft() {
     return 1;
 }
 /**
-* @brief Move block one pixel to the left.
-*/
+ * @brief Move block one pixel to the left.
+ */
 void moveleft() {
     if (spaceleft()) {
         for (int8_t y=-1; y<3; y++) {
@@ -348,10 +306,10 @@ void moveleft() {
     }
 }
 /**
-* @brief Determine if there is space to the right the block
-*
-* @return True or False.
-*/
+ * @brief Determine if there is space to the right the block
+ *
+ * @return True or False.
+ */
 int spaceright() {
     for (uint8_t i=-2; i<=2; ++i) {
         if (fb_blocks[cordy + i] & fb_floor[cordy + i] << 1) {
@@ -361,8 +319,8 @@ int spaceright() {
     return 1;
 }
 /**
-* @brief Move block one pixel to the right.
-*/
+ * @brief Move block one pixel to the right.
+ */
 void moveright() {
     if (spaceright()) {
         for (int8_t y=-1; y<3; y++) {
@@ -373,8 +331,8 @@ void moveright() {
     }
 }
 /**
-* @brief Sum all frame buffers, store result in fb_main[]
-*/
+ * @brief Sum all frame buffers, store result in fb_main[]
+ */
 void updateframebuffer() {
     for (uint8_t i=0; i<32; i++) {
         fb_main[i] = fb_blocks[i] + fb_floor[i];
@@ -386,8 +344,8 @@ void updateframebuffer() {
     }
 }
 /**
-* @brief Initialize frame buffer at the begging of the game (after PLAY)
-*/
+ * @brief Initialize frame buffer at the begging of the game (after PLAY)
+ */
 void fb_init() {
     /* set unused bits of block and floor frame buffers to "0" */
     for (uint8_t i=0; i<8; ++i) {
@@ -419,8 +377,8 @@ void fb_init() {
     fb_points001[4] = 0x00e0;
 }
 /**
-* @brief Turn the block clockwise 
-*/
+ * @brief Turn the block clockwise 
+ */
 void rotateRight() {
 	if (currentblock) { /* if currentblock != BLOCK_I */
 		int8_t crossArr[5] = { };
@@ -509,8 +467,8 @@ void rotateRight() {
 	}
 }
 /**
-* @brief Generate new block on the top of the board.
-*/
+ * @brief Generate new block on the top of the board.
+ */
 void newblock() {
 	/* delete previous block from block frame buffer */
 	for (uint8_t i=-2; i<=2; ++i) fb_blocks[cordy + i] = 0x0000;
@@ -519,7 +477,7 @@ void newblock() {
 	cordx = 8;
 	cordy = 8;
 	currentblock = nextblock;
-	nextblock = rand8();
+	nextblock = tim_ms%7;
 
 	switch (currentblock) {
 		case BLOCK_I:
@@ -560,8 +518,8 @@ void newblock() {
 	}
 }
 /**
-* @brief Generate next block.
-*/
+ * @brief Generate next block.
+ */
 void nextblockdisplay() {
 	switch (nextblock) {
 		case BLOCK_I:
@@ -596,8 +554,8 @@ void nextblockdisplay() {
 	updateframebuffer();
 }
 /**
-* @brief Uptade points counter.
-*/
+ * @brief Uptade points counter.
+ */
 void updatepoints() {
 	points++;
 	
@@ -834,8 +792,8 @@ void updatepoints() {
 	updateframebuffer();
 }
 /**
-* @brief Trigger and interrupt every 0.512 ms
-*/
+ * @brief Trigger and interrupt every 0.512 ms
+ */
 ISR(TIMER0_COMPA_vect) {
         tim_ms++;
 	debounce++;
