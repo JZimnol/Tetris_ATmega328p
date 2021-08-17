@@ -1,6 +1,6 @@
 # Tetris on ATmega328p (with shift registers!)
 Below is a brief descripction of the _Tetris_ project. The code was written by me and a few colleagues to familiarize ourselves with the digital electronics (the original version used MAX7219 displays so it was much easier to make). After building my version, I adapted the code to the shift registers.  
-The design is amateurish, the code is not 100% optimal, the soldering is also not professional, but it was done to kill the spare time.
+The design is amateurish, the code is not 100% optimal (e.g. no header files, no structs, no enums, no typedefs) but it will not be improved due to the fact that it is a memento of our first project; the soldering is also not professional, but it was done to kill the spare time.
 
 # Components used:
 1. Microcontroller ATmega328p
@@ -22,6 +22,7 @@ Shift register schematics have been also simplified.
 <p align="center">
 <img src="https://github.com/JZimnol/Tetris_ATmega328p/blob/main/Images/Schematic_full.png" width="900">
 </p>
+(note: capacitors can also be added in parallel to the buttons)
 
 # Final product:
 <p align="center">
