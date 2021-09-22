@@ -9,13 +9,13 @@ int main(void) {
     buttonsInit();
     SPI_MasterInit();
     TIM0_Init();
-	sei();			  
+    sei();			  
 
     displayPLAY();
     while( !PC1_PUSHED )
         ;
 
-	timer_ms = 0;
+    timer_ms = 0;
     while( timer_ms < 250 )
         ;
 
@@ -31,19 +31,19 @@ int main(void) {
         }
         if( PC2_PUSHED && debounce > 300 ) {
             moveBlockLeft();
-			debounce = 0;
+            debounce = 0;
         }
         if( PC3_PUSHED && debounce > 300 ) {
             moveBlockDown();
-			debounce = 0;
+            debounce = 0;
         }
         if( PC0_PUSHED && debounce > 300 ) {
             moveBlockRight();
-			debounce = 0;
+            debounce = 0;
         }
         if( PC1_PUSHED && debounce > 300 ) {
             rotateBlockRight();
-			debounce = 0;
+            debounce = 0;
         }
     }
     return (0);
@@ -52,10 +52,10 @@ int main(void) {
 /* interruption every 0.512 ms */
 ISR(TIMER0_COMPA_vect) {
         timer_ms++;
-		debounce++;
-		SPI_MasterTransmit_16bit(~frameBuffer.main[iteratorSPI]);  /* send frame buffer */
+        debounce++;
+        SPI_MasterTransmit_16bit(~frameBuffer.main[iteratorSPI]);  /* send frame buffer */
         /* 0x80000000 == 0b10000000000000000000000000000000 */
-		SPI_MasterTransmit_32bit(0x80000000>>iteratorSPI);         /* send one-hot row */
-		iteratorSPI++;
-		if (iteratorSPI == 32) iteratorSPI = 0;
+        SPI_MasterTransmit_32bit(0x80000000>>iteratorSPI);         /* send one-hot row */
+        iteratorSPI++;
+        if (iteratorSPI == 32) iteratorSPI = 0;
 }
